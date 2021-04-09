@@ -116,3 +116,6 @@ dmypy.json
 # IDE
 .idea
 
+# .txt files
+old.txt
+
