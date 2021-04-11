@@ -16,7 +16,4 @@ assert keys[0] == "Batch 1", "No key with 'Batch 1' found."
 # a request, at least see if we can reproduce such a request, we there are no comments for the duration of the Batch
 # etc. pp.
 
-# clean the comments
-# cleaned_comments = vodchat.clean_comments(raw_comments=raw_comments)
-# OR call it like this (it is a @staticmethod)
-# cleaned_comments = pyvod.VODChat.clean_comments(raw_comments=raw_comments)
+vodchat.clean_comments()
