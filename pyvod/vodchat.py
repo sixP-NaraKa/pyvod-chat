@@ -20,6 +20,10 @@ headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv
 #           them and we gucci
 #           we can, with this approach, still store all the requests (i.e. the raw data) as we do now and then
 #           afterwards dump it into a additional .json file
+#       - write the extracted "clean" data for each comment into a new separate list (or better yet dictionary, 1...X)
+#           and return this as the 'cleaned_comments' class instance attribute
+#           this 1. makes more sense, 2. we then don't need to do any other extraction really from this data, if we want
+#           to use it at some point somewhere else, etc.
 
 
 class VODChat:
