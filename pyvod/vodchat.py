@@ -1,11 +1,25 @@
+from os import getenv
+import json
+
 import requests
 
+import dotenv
+
+from .exceptions import TwitchApiException
 
 # https://dev.twitch.tv/docs/v5
-base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/ for example
+base_url = "https://api.twitch.tv/v5/videos/{}/comments?limit=10000"  # videos/979245105/ for example
 
 # required headers for the API requests
-headers = {"client-id": "ENTER ID HERE", "accept": "application/vnd.twitchtv.v5+json"}
+dotenv.load_dotenv()  # no path speficication necessary, if .env file is simply called ".env", otherwise path needed
+headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
+
+# TODO: - possibly think about yielding each extracted batch of comments and processing them one after another, instead
+#           of waiting for all the requests to finish and then starting with the processing process (i.e. writing, etc.)
+#           with this, we don't theoretically need to "clean" the batches of requests as we do now, but simply process
+#           them and we gucci
+#           we can, with this approach, still store all the requests (i.e. the raw data) as we do now and then
+#           afterwards dump it into a additional .json file
 
 
 class VODChat:
@@ -35,17 +49,43 @@ class VODChat:
         self.first_comment = tuple()
         self.last_comment = tuple()
 
-    @property
-    def vod_chat_comments(self):
+    def get_vod_chat_comments(self):
         return self.cleaned_comments
 
-    @staticmethod
-    def clean_comments(raw_comments: dict):
+    def clean_comments(self, provided_raw_comments: dict = None, save_as_json: bool = True) -> list:
         """ Cleans the raw_comments provided. Here we go through the dictionary and extract only the comment data.
+
+            If no raw_comments have been provided, we use the class 'self.raw_comments' instead.
 
             Meaning: user name, when it was posted, and the body/text of the chat comment.
         """
-        return NotImplementedError
+
+        if not provided_raw_comments:  # if no raw comments have been provided, using the class instance raw_comments
+            provided_raw_comments = self.raw_comments
+        # print(provided_raw_comments)
+
+        # only get the 'comments' keys/values out of the raw data, only those are of interest here
+        # needed_comment_data = [{"comments": raw_comments[batch]["comments"] for batch in raw_comments.keys()}]
+        self.cleaned_comments = [provided_raw_comments[batch]["comments"] for batch in provided_raw_comments.keys()]
+
+        # create a .txt file to dump the comment data into
+        # we don't care if we overwrite existing files
+        with open(f"VOD_{self.vod_id}_CHAT.txt", "w", encoding="utf-8") as file:
+            for comment_list in self.cleaned_comments:  # for each list of comments
+                for comment_data_dict in comment_list:  # for each dictionary in the comment_list
+
+                    created_at = comment_data_dict["created_at"]
+                    commenter = comment_data_dict["commenter"]["display_name"]  # or we take the "name" key value
+                    message = comment_data_dict["message"]["body"]
+
+                    file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
+
+        # additionally save the raw comment JSON data we extracted from the Twitch API
+        # we also don't care here if we overwrite existing files as well
+        if save_as_json:
+            json.dump(obj=provided_raw_comments, fp=open(f"VOD_{self.vod_id}_RAW.json", "w"), indent=4)
+
+        return self.cleaned_comments
 
     def get_raw_chat_comments_from_vod(self):
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
@@ -61,11 +101,18 @@ class VODChat:
             # make new request with the _next cursor, so we can get the next comments payload
             _request_response = requests.get(url=self.url, headers=headers, params={"cursor": _next})
             _json = _request_response.json()
+
+            if _request_response.status_code != 200:
+                msg_from_twitch = _json["message"]
+                raise TwitchApiException("Twitch API responded with '{1}' (status code {0}). Expected 200 (OK)."
+                                         .format(_request_response.status_code, msg_from_twitch)
+                                         )
+
             _next = _json.get("_next", 0)  # get the key, if not found default to 0
 
-            print(_json)
-            print(_next)
-            print()
+            # print(_json)
+            # print(_next)
+            # print()
 
             # add the next/new batch of comments to the raw_comments, which we can later clean
             self.raw_comments[f"Batch {counter}"] = _json

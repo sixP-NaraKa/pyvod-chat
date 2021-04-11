@@ -118,4 +118,6 @@ dmypy.json
 
 # .txt files
 old.txt
+*_CHAT.txt
+*_RAW.json
 
