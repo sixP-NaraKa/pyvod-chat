@@ -1,5 +1,6 @@
 from os import getenv
 import json
+from typing import Generator
 
 import requests
 
@@ -49,24 +50,58 @@ class VODChat:
         and storing these inside the 'cleaned_comments' class attribute.
     """
 
-    def __init__(self, vod_id: str):  # , raw_comments=None):
-        if not vod_id:
+    def __init__(self, vod_id: str):
+        if not vod_id or not isinstance(vod_id, str):  # if the supplied vod_id is empty or not a str
             raise ValueError("'vod_id' required.")
         self.vod_id = str(vod_id)  # cast it so string, just to be safe
-        self.cleaned_comments = None
-        self.raw_comments = dict()  # if raw_comments is None else raw_comments
+        self.cleaned_comments = list()  # None
+        self.raw_comments = dict()  # None
 
         self.url = base_url.format(self.vod_id)
 
         # first and last comment of the VOD
         # contains both the user name and the timestamp (when the chat comment was sent)
-        self.first_comment = tuple()
-        self.last_comment = tuple()
+        self.first_comment = None  # tuple()  # None
+        self.last_comment = None  # tuple()  # None
 
-    def get_vod_chat_comments(self):
-        return self.cleaned_comments
+    @staticmethod
+    def _get_channel(channel_id: str) -> tuple[str, int, int, str]:
+        """ Get the channel for the specified channel ID. Also fetches additional data, such as the amount of
+            followers of the channel, the name of the channel, the amount of views and if the broadcaster type.
+        """
 
-    def clean_comments(self, provided_raw_comments: dict = None, save_as_json: bool = True) -> list:
+        channel_url = "https://api.twitch.tv/v5/channels/{channel_id}".format(channel_id=channel_id)
+        response = requests.get(url=channel_url, headers=headers).json()
+        print(response)
+
+        return response["display_name"], response["views"], response["followers"], response["broadcaster_type"]
+
+    @staticmethod
+    def _get_amt_subscribers(channel_id: str):
+        """ Get the amount of subscribers for a given channel ID. """
+
+        subs_url = "https://api.twitch.tv/v5/channels/{channel_id}/subscriptions".format(channel_id=channel_id)
+        response = requests.get(url=subs_url, headers=headers)
+        print(response.json())
+
+    @staticmethod
+    def _get_followers(channel_id: str):
+        """ Gets the amount of followers for a given channel ID.
+            This is actually not needed anymore, since we get the amount of followers directly from the channel request.
+        """
+        raise NotImplementedError
+
+    def get_first_comment(self) -> tuple[str, str, str]:
+        # return self.cleaned_comments[0] if self.cleaned_comments else None  # return first comment data
+        # or
+        return self.first_comment
+
+    def get_last_comment(self) -> tuple[str, str, str]:
+        # return self.cleaned_comments[-1] if self.cleaned_comments else None  # return last comment data
+        # or
+        return self.last_comment
+
+    def clean_and_process_comments(self, save_as_json: bool = True) -> list[tuple[str, str, str]]:
         """ Cleans the raw_comments provided. Here we go through the dictionary and extract only the comment data.
 
             If no raw_comments have been provided, we use the class 'self.raw_comments' instead.
@@ -74,34 +109,71 @@ class VODChat:
             Meaning: user name, when it was posted, and the body/text of the chat comment.
         """
 
-        if not provided_raw_comments:  # if no raw comments have been provided, using the class instance raw_comments
-            provided_raw_comments = self.raw_comments
-        # print(provided_raw_comments)
-
-        # only get the 'comments' keys/values out of the raw data, only those are of interest here
-        # needed_comment_data = [{"comments": raw_comments[batch]["comments"] for batch in raw_comments.keys()}]
-        self.cleaned_comments = [provided_raw_comments[batch]["comments"] for batch in provided_raw_comments.keys()]
+        _raw_comments = self.get_raw_chat_comments_from_vod()
 
         # create a .txt file to dump the comment data into
         # we don't care if we overwrite existing files
         with open(f"VOD_{self.vod_id}_CHAT.txt", "w", encoding="utf-8") as file:
-            for comment_list in self.cleaned_comments:  # for each list of comments
-                for comment_data_dict in comment_list:  # for each dictionary in the comment_list
+            for comment_dict in _raw_comments:  # for each dict (i.e. yield) we have in our generator
+                for comment_data_list_of_dicts in comment_dict["comments"]:  # list of dicts in the overall comment_dict
 
-                    created_at = comment_data_dict["created_at"]
-                    commenter = comment_data_dict["commenter"]["display_name"]  # or we take the "name" key value
-                    message = comment_data_dict["message"]["body"]
+                    created_at = comment_data_list_of_dicts["created_at"]
+                    commenter = comment_data_list_of_dicts["commenter"]["display_name"]  # or "name" key value
+                    message = comment_data_list_of_dicts["message"]["body"]
 
                     file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
+
+                    # we now have the needed comment data, which we store in a tuple which is itself stored in the
+                    # 'cleaned_comments' class instance variable
+                    needed_comment_data = (created_at, commenter, message)
+                    self.cleaned_comments.append(needed_comment_data)
+
+            # set the first and last comment
+            self.first_comment = self.cleaned_comments[0]
+            self.last_comment = self.cleaned_comments[-1]
+
+            # additional data which might be of interest
+            channel_id = comment_data_list_of_dicts["channel_id"]
+            name, views, followers, broadcaster_type = self._get_channel(channel_id=channel_id)
+            # TODO: not using it anymore, because file is overwriting with seek, gotta do it differently maybe
+            amt_of_comments = len(self.cleaned_comments)
+
+            # now we add some additional data into the top of the .txt file (i.e. first/last comment, VOD ID,
+            # date of stream, streamer name, etc.
+            # go back to the beginning, overwrites shizzle and all, don't wanna bother "fixing" this shit
+            # file.seek(0)
+            file.write("\n\n\n\n"
+                       "Date of Stream: {date}\n"  # TODO: get actual date of stream
+                       "Streamer: {name}\n"
+                       "\tChannel ID: {channel_id}\n"
+                       "\tChannel views: {views}\n"
+                       "\tFollowers: {followers}\n"
+                       "\tBroadcaster type: {broadcaster_type}\n"
+                       "VOD ID: {vod}\n"
+                       "Amount of comments: {amount}\n"
+                       "First comment: {first}\n"
+                       "Last comment: {last}"  # \n\n"
+                       .format(date="Now",
+                               name=name,
+                               channel_id=channel_id,
+                               views=views,
+                               followers=followers,
+                               broadcaster_type=broadcaster_type,
+                               vod=self.vod_id,
+                               amount=amt_of_comments,
+                               first=self.first_comment,  # self.get_first_comment(),
+                               last=self.last_comment,  # self.get_last_comment()
+                               )
+                       )
 
         # additionally save the raw comment JSON data we extracted from the Twitch API
         # we also don't care here if we overwrite existing files as well
         if save_as_json:
-            json.dump(obj=provided_raw_comments, fp=open(f"VOD_{self.vod_id}_RAW.json", "w"), indent=4)
+            json.dump(obj=self.raw_comments, fp=open(f"VOD_{self.vod_id}_RAW.json", "w"), indent=4)
 
         return self.cleaned_comments
 
-    def get_raw_chat_comments_from_vod(self) -> dict:
+    def get_raw_chat_comments_from_vod(self) -> Generator:
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
             us, has yet to be properly cleaned and only the relevant information extracted.
 
@@ -125,35 +197,48 @@ class VODChat:
 
             _next = _json.get("_next", 0)  # get the key, if not found default to 0
 
-            # print(_json)
-            # print(_next)
-            # print()
-
             # add the next/new batch of comments to the raw_comments, which we can later clean
             self.raw_comments[f"Batch {counter}"] = _json
 
             if _next == 0:  # if there are no more chat comments to fetch, we are done
+                yield _json  # we yield the last _json here, because otherwise we don't process this last request
                 break
 
             counter += 1
 
-        return self.raw_comments
+            yield _json
+
+        # if we use a yield (i.e. a generator), the return statement will essentially be ignored
+        # meaning, we cannot use the return values afterwards, because it is/stays the generator object
+        # return self.raw_comments
 
 
 if __name__ == "__main__":
     # import sys
-    import argparse
+    # import argparse
+    #
+    # parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
+    # parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    # args = parser.parse_args()
+    #
+    # vod_id = args.vod
+    # if not vod_id:
+    #     raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
 
-    parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
-    parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
-    args = parser.parse_args()
+    _vod_id = "979245105"
+    vodchat = VODChat(vod_id=_vod_id)
 
-    vod_id = args.vod
-    if not vod_id:
-        raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
-
-    vodchat = VODChat(vod_id=vod_id)
+    first = vodchat.get_first_comment()
+    last = vodchat.get_last_comment()
+    print(first)
+    print(last)
 
     # get the raw comments and clean them, we don't care here about the return values
-    vodchat.get_raw_chat_comments_from_vod()
-    vodchat.clean_comments(save_as_json=True)
+    # vodchat.get_raw_chat_comments_from_vod()
+    clean = vodchat.clean_and_process_comments(save_as_json=True)
+    first = vodchat.get_first_comment()
+    last = vodchat.get_last_comment()
+    print(first)
+    print(last)
+
+    print(len(clean))
