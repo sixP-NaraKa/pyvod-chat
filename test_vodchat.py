@@ -16,4 +16,4 @@ assert keys[0] == "Batch 1", "No key with 'Batch 1' found."
 # a request, at least see if we can reproduce such a request, we there are no comments for the duration of the Batch
 # etc. pp.
 
-vodchat.clean_comments()
+vodchat.clean_and_process_comments()
