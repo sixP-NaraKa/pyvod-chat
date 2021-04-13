@@ -5,7 +5,11 @@ import requests
 
 import dotenv
 
-from .exceptions import TwitchApiException
+# with trying to use it at the inbuilt Terminal here in PyCharm (and prob otherwise) these imports here are failing
+# but if we simply use pyinstaller and make it an .exe, then we should be gucci anyway (can be hingeklatscht in GitHub
+# as part of a release) - i.e. either use it manually or use it as a Python package/module
+# from pyvod.exceptions import TwitchApiException
+# from .exceptions import TwitchApiException
 
 # https://dev.twitch.tv/docs/v5
 base_url = "https://api.twitch.tv/v5/videos/{}/comments?limit=10000"  # videos/979245105/ for example
@@ -13,6 +17,7 @@ base_url = "https://api.twitch.tv/v5/videos/{}/comments?limit=10000"  # videos/9
 # required headers for the API requests
 dotenv.load_dotenv()  # no path speficication necessary, if .env file is simply called ".env", otherwise path needed
 headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
+
 
 # TODO: - possibly think about yielding each extracted batch of comments and processing them one after another, instead
 #           of waiting for all the requests to finish and then starting with the processing process (i.e. writing, etc.)
@@ -24,6 +29,11 @@ headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv
 #           and return this as the 'cleaned_comments' class instance attribute
 #           this 1. makes more sense, 2. we then don't need to do any other extraction really from this data, if we want
 #           to use it at some point somewhere else, etc.
+
+
+class TwitchApiException(Exception):
+    """ An exception for when the Twitch API response fails / does not respond with status code 200. """
+    pass
 
 
 class VODChat:
@@ -91,7 +101,7 @@ class VODChat:
 
         return self.cleaned_comments
 
-    def get_raw_chat_comments_from_vod(self):
+    def get_raw_chat_comments_from_vod(self) -> dict:
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
             us, has yet to be properly cleaned and only the relevant information extracted.
 
@@ -108,9 +118,10 @@ class VODChat:
 
             if _request_response.status_code != 200:
                 msg_from_twitch = _json["message"]
-                raise TwitchApiException("Twitch API responded with '{1}' (status code {0}). Expected 200 (OK)."
-                                         .format(_request_response.status_code, msg_from_twitch)
-                                         )
+                raise TwitchApiException(
+                    "Twitch API responded with '{1}' (status code {0}). Expected 200 (OK)."
+                    .format(_request_response.status_code, msg_from_twitch)
+                )
 
             _next = _json.get("_next", 0)  # get the key, if not found default to 0
 
@@ -127,3 +138,22 @@ class VODChat:
             counter += 1
 
         return self.raw_comments
+
+
+if __name__ == "__main__":
+    # import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
+    parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    args = parser.parse_args()
+
+    vod_id = args.vod
+    if not vod_id:
+        raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+
+    vodchat = VODChat(vod_id=vod_id)
+
+    # get the raw comments and clean them, we don't care here about the return values
+    vodchat.get_raw_chat_comments_from_vod()
+    vodchat.clean_comments(save_as_json=True)
