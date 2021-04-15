@@ -13,7 +13,7 @@ import dotenv
 # from .exceptions import TwitchApiException
 
 # https://dev.twitch.tv/docs/v5
-base_url = "https://api.twitch.tv/v5/videos/{}/comments?limit=10000"  # videos/979245105/ for example
+base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/ for example
 
 # required headers for the API requests
 dotenv.load_dotenv()  # no path speficication necessary, if .env file is simply called ".env", otherwise path needed
@@ -79,6 +79,12 @@ class VODChat:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def get_vod_date(vod_id: str):
+        vod_url = "https://api.twitch.tv/v5/videos/{}".format(vod_id)
+        response = requests.get(url=vod_url, headers=headers)
+        return "".join(response.json()["created_at"][:10])
+
     def get_first_comment(self) -> tuple[str, str, str]:
         # return self.cleaned_comments[0] if self.cleaned_comments else None  # return first comment data
         # or
@@ -91,8 +97,6 @@ class VODChat:
 
     def clean_and_process_comments(self, save_as_json: bool = True) -> list[tuple[str, str, str]]:
         """ Cleans the raw_comments provided. Here we go through the dictionary and extract only the comment data.
-
-            If no raw_comments have been provided, we use the class 'self.raw_comments' instead.
 
             Meaning: user name, when it was posted, and the body/text of the chat comment.
         """
@@ -121,6 +125,7 @@ class VODChat:
             self.last_comment = self.cleaned_comments[-1]
 
             # additional data which might be of interest
+            date_of_stream = self.get_vod_date(vod_id=self.vod_id)
             channel_id = comment_data_list_of_dicts["channel_id"]
             name, views, followers, broadcaster_type = self._get_channel(channel_id=channel_id)
             # TODO: not using it anymore, because file is overwriting with seek, gotta do it differently maybe
@@ -131,7 +136,7 @@ class VODChat:
             # go back to the beginning, overwrites shizzle and all, don't wanna bother "fixing" this shit
             # file.seek(0)
             file.write("\n\n\n\n"
-                       "Date of Stream: {date}\n"  # TODO: get actual date of stream
+                       "Date of Stream: {date}\n"
                        "Streamer: {name}\n"
                        "\tChannel ID: {channel_id}\n"
                        "\tChannel views: {views}\n"
@@ -141,7 +146,7 @@ class VODChat:
                        "Amount of comments: {amount}\n"
                        "First comment: {first}\n"
                        "Last comment: {last}"  # \n\n"
-                       .format(date="Now",
+                       .format(date=date_of_stream,
                                name=name,
                                channel_id=channel_id,
                                views=views,
