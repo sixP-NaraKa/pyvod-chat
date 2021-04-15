@@ -121,3 +121,6 @@ old.txt
 *_CHAT.txt
 *_RAW.json
 
+# .py files
+test.py
+
