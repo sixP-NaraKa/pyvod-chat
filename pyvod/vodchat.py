@@ -20,6 +20,12 @@ dotenv.load_dotenv()  # no path speficication necessary, if .env file is simply 
 headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
 
 
+# TODO: - custom user defined file paths, both via usage as a module and standalone (via cmd, etc.)
+#       --> option -fp (add to argument parser), default None
+#       --> in the cleaned_comments method, we simply add a argument to add a file path, default None
+#       we then simply make the check against the file path there, and that should be a simple solution
+
+
 class TwitchApiException(Exception):
     """ An exception for when the Twitch API response fails / does not respond with status code 200. """
     pass
@@ -94,17 +100,24 @@ class VODChat:
         # or
         return self.last_comment
 
-    def clean_and_process_comments(self, save_as_json: bool = True) -> list[tuple[str, str, str]]:
+    def clean_and_process_comments(self, save_as_json: bool = True, filepath: str = None) -> list[tuple[str, str, str]]:
         """ Cleans the raw_comments provided. Here we go through the dictionary and extract only the comment data.
 
             Meaning: user name, when it was posted, and the body/text of the chat comment.
         """
 
+        file_name = "VOD_{}_{}.{}"  # 1. vod_id, 2. CHAT or RAW, 3. file extension
+        # if no filepath specified, we simply write in the current dir (else block)
+        # if a filepath has been specified (if block), we append our file_name to the path
+        # TODO: - make it an actual Path object, so we can check if the file path is a directory and
+        #           if so, we then create a new text file inside that directory, or something like this
+        filepath = filepath + "\\" + file_name if filepath else file_name
+
         _raw_comments = self.get_raw_chat_comments_from_vod()
 
         # create a .txt file to dump the comment data into
         # we don't care if we overwrite existing files
-        with open(f"VOD_{self.vod_id}_CHAT.txt", "w", encoding="utf-8") as file:
+        with open(filepath.format(self.vod_id, "CHAT", "txt"), mode="w", encoding="utf-8") as file:
             for comment_dict in _raw_comments:  # for each dict (i.e. yield) we have in our generator
                 for comment_data_list_of_dicts in comment_dict["comments"]:  # list of dicts in the overall comment_dict
 
@@ -161,7 +174,10 @@ class VODChat:
         # additionally save the raw comment JSON data we extracted from the Twitch API
         # we also don't care here if we overwrite existing files as well
         if save_as_json:
-            json.dump(obj=self.raw_comments, fp=open(f"VOD_{self.vod_id}_RAW.json", "w"), indent=4)
+            # json.dump(obj=self.raw_comments, fp=open(f"VOD_{self.vod_id}_RAW.json", "w"), indent=4)
+            json.dump(obj=self.raw_comments,
+                      fp=open(filepath.format(self.vod_id, "RAW", "json"), mode="w"),
+                      indent=4)
 
         return self.cleaned_comments
 
@@ -207,10 +223,14 @@ class VODChat:
 
 if __name__ == "__main__":
     # import sys
+    from os import getcwd
     import argparse
 
     parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
     parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    parser.add_argument("-dir", type=str, default=None, help="the directory path where the output is to be saved\n"
+                                                             "If not provided, defaults to the directory "
+                                                             "in which the script is located")
     args = parser.parse_args()
 
     vod = args.vod
@@ -221,7 +241,10 @@ if __name__ == "__main__":
     vodchat = VODChat(vod_id=vod)
 
     # get the raw comments and clean them, we don't care here about the return values
-    clean = vodchat.clean_and_process_comments(save_as_json=True)
+    fp = args.dir
+
+    clean = vodchat.clean_and_process_comments(save_as_json=True, filepath=fp)
     print("Comments extracted: ", len(clean))
-    print("See VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
-          "\nSee VOD_{}_RAW.json for the raw data.".format(vod, vod))
+    print("See the following files in the '{_dir}' directory: ".format(_dir=fp if fp else getcwd()))
+    print("- VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
+          "\n- VOD_{}_RAW.json for the raw data.".format(vod, vod))
