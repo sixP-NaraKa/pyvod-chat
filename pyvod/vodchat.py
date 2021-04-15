@@ -20,18 +20,6 @@ dotenv.load_dotenv()  # no path speficication necessary, if .env file is simply 
 headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
 
 
-# TODO: - possibly think about yielding each extracted batch of comments and processing them one after another, instead
-#           of waiting for all the requests to finish and then starting with the processing process (i.e. writing, etc.)
-#           with this, we don't theoretically need to "clean" the batches of requests as we do now, but simply process
-#           them and we gucci
-#           we can, with this approach, still store all the requests (i.e. the raw data) as we do now and then
-#           afterwards dump it into a additional .json file
-#       - write the extracted "clean" data for each comment into a new separate list (or better yet dictionary, 1...X)
-#           and return this as the 'cleaned_comments' class instance attribute
-#           this 1. makes more sense, 2. we then don't need to do any other extraction really from this data, if we want
-#           to use it at some point somewhere else, etc.
-
-
 class TwitchApiException(Exception):
     """ An exception for when the Twitch API response fails / does not respond with status code 200. """
     pass
