@@ -60,7 +60,6 @@ class VODChat:
 
         channel_url = "https://api.twitch.tv/v5/channels/{channel_id}".format(channel_id=channel_id)
         response = requests.get(url=channel_url, headers=headers).json()
-        print(response)
 
         return response["display_name"], response["views"], response["followers"], response["broadcaster_type"]
 
@@ -208,30 +207,21 @@ class VODChat:
 
 if __name__ == "__main__":
     # import sys
-    # import argparse
-    #
-    # parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
-    # parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
-    # args = parser.parse_args()
-    #
-    # vod_id = args.vod
-    # if not vod_id:
-    #     raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+    import argparse
 
-    _vod_id = "979245105"
-    vodchat = VODChat(vod_id=_vod_id)
+    parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
+    parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    args = parser.parse_args()
 
-    first = vodchat.get_first_comment()
-    last = vodchat.get_last_comment()
-    print(first)
-    print(last)
+    vod = args.vod
+    if not vod:
+        raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+
+    # vod = "979245105"
+    vodchat = VODChat(vod_id=vod)
 
     # get the raw comments and clean them, we don't care here about the return values
-    # vodchat.get_raw_chat_comments_from_vod()
     clean = vodchat.clean_and_process_comments(save_as_json=True)
-    first = vodchat.get_first_comment()
-    last = vodchat.get_last_comment()
-    print(first)
-    print(last)
-
-    print(len(clean))
+    print("Comments extracted: ", len(clean))
+    print("See VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
+          "\nSee VOD_{}_RAW.json for the raw data.".format(vod, vod))
