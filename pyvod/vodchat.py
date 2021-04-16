@@ -1,4 +1,5 @@
-from os import getenv, getcwd
+from os import getenv, getcwd, remove
+from sys import exit
 import json
 from typing import Generator, Union
 
@@ -62,6 +63,10 @@ class VODChat:
         self.first_comment = None  # tuple()  # None
         self.last_comment = None  # tuple()  # None
 
+        # a flag we set if the first request response contains an empty "comments" list value
+        self._no_first_comments_response = False
+        self._no_last_comments_response = False  # shouldn't need this, since the _next cursor from the API should be ok
+
     def _get_raw_chat_comments_from_vod(self) -> Generator:
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
             us, has yet to be properly cleaned and only the relevant information extracted.
@@ -71,7 +76,6 @@ class VODChat:
 
         counter = 1
         _next = ""  # for our first request, we don't have a _next cursor, so we simply use an empty string
-        no_comments = False  # a flag we set if the first request response contains an empty "comments" list value
         while True:
 
             # make new request with the _next cursor, so we can get the next comments payload
@@ -84,6 +88,12 @@ class VODChat:
                     "Twitch API responded with '{1}' (status code {0}). Expected 200 (OK)."
                     .format(_request_response.status_code, msg_from_twitch)
                 )
+
+            # if the first response contains a empty list of "comments",
+            # we set our flag to let the program know to stop trying to extract more comments
+            if counter == 1 and not _json["comments"]:
+                self._no_first_comments_response = True
+                # return self._no_first_comments_response
 
             _next = _json.get("_next", 0)  # get the key, if not found default to 0
 
@@ -146,12 +156,23 @@ class VODChat:
 
         _raw_comments = self._get_raw_chat_comments_from_vod()  # Generator
 
+        # we check here first if our empty first comment response has been set
+        # with this we can not only stop making any more requests to the Twitch API,
+        # but also not mistakenly creating any of our output files
+        # if self._no_first_comments_response:  # if True
+        #     return self.cleaned_comments
+
         # create a .txt file to dump the comment data into
         # we don't care if we overwrite existing files
         # https://stackoverflow.com/questions/47518669/create-new-folder-in-python-with-pathlib-and-write-files-into-it
         chat_filepath = filepath / file_name.format(self.vod_id, "CHAT", "txt")
         with chat_filepath.open(mode="w", encoding="utf-8") as c_file:
             for comment_dict in _raw_comments:  # for each dict (i.e. yield) we have in our generator
+                if self._no_first_comments_response:  # if True
+                    # TODO: - find a way to not do this check inside the loop (see above)
+                    c_file.close()
+                    remove(path=chat_filepath)  # remove our created file
+                    return self.cleaned_comments
                 for comment_data_list_of_dicts in comment_dict["comments"]:  # list of dicts in the overall comment_dict
 
                     created_at = comment_data_list_of_dicts["created_at"]
@@ -216,27 +237,26 @@ class VODChat:
 # Only run the following piece of code if the script is run directly, i.e. in a CLI environment (cmd/terminal). |
 #################################################################################################################
 if __name__ == "__main__":
-    # import argparse
-    #
-    # parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
-    # parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
-    # parser.add_argument("-dir", type=str, default=None, help="the directory path where the output is to be saved\n"
-    #                                                          "If not provided, defaults to the directory "
-    #                                                          "in which the script is located")
-    # args = parser.parse_args()
-    #
-    # vod = args.vod
-    # if not vod:
-    #     print("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
-    #     sys.exit(-1)
-    #
-    # fp = args.dir
+    import argparse
 
-    fp = None
+    parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
+    parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    parser.add_argument("-dir", type=str, default=None, help="the directory path where the output is to be saved\n"
+                                                             "If not provided, defaults to the directory "
+                                                             "in which the script is located")
+    args = parser.parse_args()
+
+    vod = args.vod
+    if not vod:
+        print("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+        exit(-1)
+
+    fp = args.dir
+    # fp = None
     fp = _validate_path(provided_path=fp) if fp else pathlib.Path(getcwd())
 
     # vod = "979245105"
-    vod = "979245101"
+    # vod = "979245101"
     vodchat = VODChat(vod_id=vod)
     print("Getting VOD comments for VOD '{}'...".format(vod))
     print("Writing the output into the following directory: {}".format(fp))
