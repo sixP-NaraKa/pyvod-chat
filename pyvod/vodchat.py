@@ -374,6 +374,24 @@ if __name__ == "__main__":
             print("The supplied path is a file. Please provide a directory (folder) path.")
             sys.exit(-1)
             # raise RuntimeError("The supplied path is a file.")
+    # import argparse
+    #
+    # parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
+    # parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD")
+    # parser.add_argument("-dir", type=str, default=None, help="the directory path where the output is to be saved\n"
+    #                                                          "If not provided, defaults to the directory "
+    #                                                          "in which the script is located")
+    # args = parser.parse_args()
+    #
+    # vod = args.vod
+    # if not vod:
+    #     print("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+    #     sys.exit(-1)
+    #
+    # fp = args.dir
+
+    fp = None
+    fp = _validate_path(provided_path=fp) if fp else pathlib.Path(getcwd())
 
     # vod = "979245105"
     vod = "979245101"
