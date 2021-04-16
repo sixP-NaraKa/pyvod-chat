@@ -100,7 +100,7 @@ class VODChat:
         # or
         return self.last_comment
 
-    def clean_and_process_comments(self, save_as_json: bool = True, filepath: str = None) -> list[tuple[str, str, str]]:
+    def clean_and_process_comments(self, save_as_json: bool = True, dirpath: str = None) -> list[tuple[str, str, str]]:
         """ Cleans the raw_comments provided. Here we go through the dictionary and extract only the comment data.
 
             Meaning: user name, when it was posted, and the body/text of the chat comment.
@@ -111,7 +111,7 @@ class VODChat:
         # if a filepath has been specified (if block), we append our file_name to the path
         # TODO: - make it an actual Path object, so we can check if the file path is a directory and
         #           if so, we then create a new text file inside that directory, or something like this
-        filepath = filepath + "\\" + file_name if filepath else file_name
+        filepath = dirpath + "\\" + file_name if dirpath else file_name
 
         _raw_comments = self.get_raw_chat_comments_from_vod()
 
@@ -222,8 +222,10 @@ class VODChat:
 
 
 if __name__ == "__main__":
-    # import sys
+    import sys
     from os import getcwd
+    import pathlib
+
     import argparse
 
     parser = argparse.ArgumentParser(description="Get the chat comments from a VOD!")
@@ -235,16 +237,43 @@ if __name__ == "__main__":
 
     vod = args.vod
     if not vod:
-        raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+        print("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+        sys.exit(-1)
+        # raise RuntimeError("Please rerun and specify a VOD ID via 'vodchat.py -vod VOD_ID'.")
+
+    # TODO: pass the Path() object to the later processes
+    fp = args.dir
+    path = pathlib.Path(fp)
+    if fp:  # if the -dir option has been specified
+        print(path)
+        path_exists = path.exists()
+        is_file = path.is_file()
+        # is_dir = path.is_dir()
+
+        if not path_exists:  # if it is not a valid path (either to a directory or file)
+            print("The supplied path does not exist.")
+            sys.exit(-1)
+            # raise RuntimeError("The supplied path does not exist.")
+
+        # if not is_dir and if is_file are mutually exclusive (duh), so they don't really work together like this
+        # if not is_dir:  # if it is not a valid directory
+        #     print("Not a valid directory.")
+        #     sys.exit(-1)
+        #     raise RuntimeError("Not a valid directory.")
+        if is_file:  # if it is a file
+            print("The supplied path is a file. Please provide a directory (folder) path.")
+            sys.exit(-1)
+            # raise RuntimeError("The supplied path is a file.")
 
     # vod = "979245105"
     vodchat = VODChat(vod_id=vod)
+    print("Getting VOD comments for VOD '{}'...".format(vod))
+    print("Writing the output into the following directory: {}".format(fp))
 
     # get the raw comments and clean them, we don't care here about the return values
-    fp = args.dir
 
-    clean = vodchat.clean_and_process_comments(save_as_json=True, filepath=fp)
-    print("Comments extracted: ", len(clean))
-    print("See the following files in the '{_dir}' directory: ".format(_dir=fp if fp else getcwd()))
-    print("- VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
-          "\n- VOD_{}_RAW.json for the raw data.".format(vod, vod))
+    # clean = vodchat.clean_and_process_comments(save_as_json=True, filepath=fp)
+    # print("Comments extracted: ", len(clean))
+    # print("See the following files in the '{_dir}' directory: ".format(_dir=fp if fp else getcwd()))
+    # print("- VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
+    #       "\n- VOD_{}_RAW.json for the raw data.".format(vod, vod))
