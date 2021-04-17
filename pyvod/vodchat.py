@@ -1,4 +1,5 @@
-from os import getenv, getcwd, remove
+# from os import getenv, getcwd, remove
+import os
 from sys import exit
 import json
 from typing import Generator, Union
@@ -15,7 +16,7 @@ base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/ fo
 
 # required headers for the API requests
 dotenv.load_dotenv()
-headers = {"client-id": getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
+headers = {"client-id": os.getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
 
 
 class TwitchApiException(Exception):
@@ -71,7 +72,7 @@ class VODChat:
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
             us, has yet to be properly cleaned and only the relevant information extracted.
 
-            For this cleaning, see the class method :meth:`clean_and_process_comments()`.
+            For this cleaning and processing, see the class method :meth:`get_comments()`.
         """
 
         counter = 1
@@ -100,13 +101,12 @@ class VODChat:
             # add the next/new batch of comments to the raw_comments, which we can later clean
             self.raw_comments[f"Batch {counter}"] = _json
 
-            if _next == 0:  # if there are no more chat comments to fetch, we are done
-                yield _json  # we yield the last _json here, because otherwise we don't process this last request
-                break
-
             counter += 1
 
             yield _json
+
+            if _next == 0:  # if there are no more chat comments to fetch, we are done
+                break
 
     @staticmethod
     def _get_channel(channel_id: str) -> tuple[str, int, int, str]:
@@ -152,7 +152,7 @@ class VODChat:
         # base file name which we use for our output files
         file_name = "VOD_{}_{}.{}"  # 1. vod_id, 2. CHAT or RAW, 3. file extension
 
-        filepath = _validate_path(provided_path=dirpath) if dirpath else pathlib.Path(getcwd())
+        filepath = _validate_path(provided_path=dirpath) if dirpath else pathlib.Path(os.getcwd())
 
         _raw_comments = self._get_raw_chat_comments_from_vod()  # Generator
 
@@ -171,7 +171,7 @@ class VODChat:
                 if self._no_first_comments_response:  # if True
                     # TODO: - find a way to not do this check inside the loop (see above)
                     c_file.close()
-                    remove(path=chat_filepath)  # remove our created file
+                    os.remove(path=chat_filepath)  # remove our created file
                     return self.cleaned_comments
                 for comment_data_list_of_dicts in comment_dict["comments"]:  # list of dicts in the overall comment_dict
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
     fp = args.dir
     # fp = None
-    fp = _validate_path(provided_path=fp) if fp else pathlib.Path(getcwd())
+    fp = _validate_path(provided_path=fp) if fp else pathlib.Path(os.getcwd())
 
     # vod = "979245105"
     # vod = "979245101"
