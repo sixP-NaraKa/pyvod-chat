@@ -48,7 +48,7 @@ class VODChat:
         return self.raw_comments
 
     @staticmethod
-    def _get_channel(channel_id: str) -> tuple[str, int, int, str]:
+    def _get_channel(channel_id: str) -> tuple:
         """ Get the channel for the specified channel ID. Also fetches additional data, such as the amount of
             followers of the channel, the name of the channel, the amount of views and the broadcaster type.
         """
@@ -59,7 +59,7 @@ class VODChat:
         return response["display_name"], response["views"], response["followers"], response["broadcaster_type"]
 
     @staticmethod
-    def _get_vod_date(vod_id: str):
+    def _get_vod_date(vod_id: str) -> tuple:
         """ Get the date the VOD has been live-streamed at (and the channel ID for further use). """
 
         vod_url = "https://api.twitch.tv/v5/videos/{}".format(vod_id)
@@ -105,13 +105,17 @@ class VODChat:
             if _next == 0:  # if there are no more chat comments to fetch, we are done
                 break
 
-    def get_comments(self) -> list[VODCleanedComment[str, str, str]]:
-        """ Cleans the raw_comments. Here we go through the dictionary and extract only the needed comment data.
+    def get_comments(self) -> list:
+        """
+        Cleans the raw_comments. Here we go through the dictionary and extract only the needed comment data.
 
-            Meaning: user name, when it was posted, and the body/text of the chat comment.
+        Meaning: user name, when it was posted, and the body/text of the chat comment.
 
-            If the raw data is wanted (JSON),
-            simply call the class instance attribute `raw_comments` or its property `raw`.
+        If the raw data is wanted (JSON),
+        simply call the class instance attribute `raw_comments` or its property `raw`.
+
+        :return: the extracted comments from the raw data - these are VODCleanedComment instances (tuples)
+                 with additional property attributes (name, timestamp, message)
         """
 
         _raw_comments = self._extract_comments()  # Generator with the raw comments (batch for batch)
