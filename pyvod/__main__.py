@@ -13,10 +13,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Get the chat comments from a Twitch.tv VOD! "
                                                  "Usage: 'python -m pyvod -vod VOD_ID -dir PATH_TO_SAVE_FILES_INTO'")
-    parser.add_argument("-vod", type=str, help="the VOD ID (Video ID) from the VOD", required=True)
-    parser.add_argument("-dir", type=str, default=None, help="the directory path where the output is to be saved.\n"
-                                                             "If not provided, defaults to the "
-                                                             "current working directory ")
+    parser.add_argument("-vod", "-v", type=str, help="the VOD ID (Video ID) from the VOD", required=True)
+    parser.add_argument("-dir", "-d", type=str, default=None, help="the directory path where the output is to be saved."
+                                                                   " If not provided, defaults to the "
+                                                                   "current working directory ")
     args = parser.parse_args()
 
     _vod_id = args.vod
