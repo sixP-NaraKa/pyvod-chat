@@ -17,7 +17,7 @@ client_id = os.getenv("client-id")
 client_id = client_id if client_id else "jzkbprff40iqj646a697cyrvl0zt2m6"
 
 base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/ for example
-headers = {"client-id": os.getenv("client-id"), "accept": "application/vnd.twitchtv.v5+json"}
+headers = {"client-id": client_id, "accept": "application/vnd.twitchtv.v5+json"}
 
 
 class VODChat:
