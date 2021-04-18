@@ -1,1 +1,1 @@
-from .vodchat import VODChat
+from .vod import VOD
