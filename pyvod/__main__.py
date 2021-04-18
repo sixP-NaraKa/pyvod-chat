@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # write the output to the file(s)
     # - should only be called after .get_comments(), otherwise no comments are there to write
-    vodchat.to_file()
+    vodchat.to_file(dirpath=fp, save_json=True)
 
     amt_comments = len(comments)
     print("Comments extracted: ", amt_comments)
