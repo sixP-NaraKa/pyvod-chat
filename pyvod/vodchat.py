@@ -96,7 +96,7 @@ class VODChat:
             _next = _json_body.get("_next", 0)  # get the key, if not found default to 0
 
             # add the next/new batch of comments to the raw_comments, which we can later clean
-            self.raw_comments[f"Batch {counter}"] = _json_body
+            self.raw_comments["Batch {}".format(counter)] = _json_body
 
             counter += 1
 
