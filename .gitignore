@@ -123,6 +123,6 @@ old.txt
 new_ideas.txt
 
 # .py files
-test.py
+test*.py
 _vod*.py
 
