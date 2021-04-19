@@ -3,12 +3,12 @@ import pathlib
 from .exceptions import DirectoryDoesNotExistError, DirectoryIsAFileError
 
 
-def validate_path(provided_path: str):
+def validate_path(provided_path: str) -> pathlib.Path:
     """ Helper function which checks if the provided path 1. exists, and 2. is not a file.
         With this we can be sure that the path points to a directory.
 
-        :param provided_path the path to validate.
-        :raise RunTimeError if neither the path is valid or it is a file
+        :param provided_path: the path to validate.
+        :raise DirectoryDoesNotExistError | DirectoryIsAFileError: if neither the path is valid or it is a file
     """
 
     path = pathlib.Path(provided_path)
