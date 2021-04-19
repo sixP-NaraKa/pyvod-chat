@@ -31,6 +31,7 @@ if __name__ == "__main__":
     vod = VOD(vod_id=_vod_id)
     print("Getting VOD comments for VOD '{}'...".format(_vod_id))
     print("Writing the output into the following directory: {}".format(fp))
+    print("Depending on how many comments the VOD has, it might take a while.")
 
     # get the VODChat associated with the VOD
     vodchat = vod.get_vodchat()
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     # request logic
     # if called before, a empty dict() will be returned
     # if there are no comments available, the request response in JSON format will be returned
-    raw_comments = vodchat.raw  # or vodchat.raw_comments
+    # raw_comments = vodchat.raw  # or vodchat.raw_comments
 
     # write the output to the file(s)
     # - should only be called after .get_comments(), otherwise no comments are there to write
