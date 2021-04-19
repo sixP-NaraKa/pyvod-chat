@@ -6,25 +6,34 @@ import requests
 import pathlib
 import dotenv
 
-from .vodcomment import VODCleanedComment
+from .vodcomment import VODSimpleComment
 from .utils import validate_path
 from .exceptions import TwitchApiException
 
-# check for a .env file and get the "client-id" Twitch API key
-# if there is no such key or it is empty, we use a default key
+# check for a .env file and get the "twitch-client-id" which we need to identify the application for use with the API
+# this is NOT the same as the Client-Secret, which we do not need here
+# if there is no such Client-ID or it is empty, we use a default Client-ID
 dotenv.load_dotenv()
-client_id = os.getenv("client-id")
-client_id = client_id if client_id else "jzkbprff40iqj646a697cyrvl0zt2m6"
+_client_id = os.getenv("twitch-client-id")
+_client_id = _client_id if _client_id else "r52h1i1phlvyxs0sdi3ooam1b3w62g"
 
-base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/ for example
-headers = {"client-id": client_id, "accept": "application/vnd.twitchtv.v5+json"}
+base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/comments for example
+headers = {"client-id": _client_id, "accept": "application/vnd.twitchtv.v5+json"}
+
+# additional API urls
+channel_url = "https://api.twitch.tv/v5/channels/{channel_id}"
+vod_url = "https://api.twitch.tv/v5/videos/{vod_id}"
 
 
 class VODChat:
-    """ A class which represents the VOD stream chat. We store here both the 'raw_comment' data (i.e. the JSON) for
-        and the 'cleaned_comments'.
+    """ A class which represents the VOD stream chat. We store here both the 'raw comment' data (i.e. the JSON)
+        `raw_comments` and the 'cleaned comments' `vod_comments`.
 
         There should be no need to create a instance of this class manually.
+
+        :param vod_id: the VOD ID to fetch the information for
+        :param client_id: OPTIONAL Twitch.tv Client-ID. If not specified a default Client-ID will be used
+                          Note: the Client-ID (public) is NOT the same as the Client-Secret (the latter we don't use)
     """
 
     def __init__(self, vod_id: str):
@@ -51,19 +60,22 @@ class VODChat:
     def _get_channel(channel_id: str) -> tuple:
         """ Get the channel for the specified channel ID. Also fetches additional data, such as the amount of
             followers of the channel, the name of the channel, the amount of views and the broadcaster type.
+
+            :param channel_id: the channel ID (or broadcaster ID) to fetch the information from
         """
 
-        channel_url = "https://api.twitch.tv/v5/channels/{channel_id}".format(channel_id=channel_id)
-        response = requests.get(url=channel_url, headers=headers).json()
+        response = requests.get(url=channel_url.format(channel_id=channel_id), headers=headers).json()
 
         return response["display_name"], response["views"], response["followers"], response["broadcaster_type"]
 
     @staticmethod
     def _get_vod_date(vod_id: str) -> tuple:
-        """ Get the date the VOD has been live-streamed at (and the channel ID for further use). """
+        """ Get the date the VOD has been live-streamed at (and the channel ID for further use).
 
-        vod_url = "https://api.twitch.tv/v5/videos/{}".format(vod_id)
-        response = requests.get(url=vod_url, headers=headers).json()
+            :param vod_id: the VOD ID to fetch the information from
+        """
+
+        response = requests.get(url=vod_url.format(vod_id=vod_id), headers=headers).json()
         return "".join(response["created_at"][:10]), response["channel"]["_id"]
 
     def _extract_comments(self) -> Generator:
@@ -71,6 +83,8 @@ class VODChat:
             us, has yet to be properly cleaned and only the relevant information extracted.
 
             For this cleaning and processing, see the class method :meth:`get_comments()`.
+
+            :return: Generator: yields the request responses .json()
         """
 
         counter = 1
@@ -131,7 +145,7 @@ class VODChat:
 
                 # we now have the needed comment data, which we store in a tuple VODCleanedComments,
                 # which is itself stored in the 'vod_comments' class instance variable, which holds all the comments
-                comment_data = VODCleanedComment((created_at, commenter, message))
+                comment_data = VODSimpleComment(timestamp=created_at, name=commenter, message=message)
                 self.vod_comments.append(comment_data)
 
         return self.comments
@@ -160,8 +174,11 @@ class VODChat:
         chat_filepath = directory_path / file_name.format(self.vod_id, "CHAT", "txt")
         with chat_filepath.open(mode="w", encoding="utf-8") as c_file:
 
-            for created_at, commenter, message in self.vod_comments:
-                c_file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
+            if self.vod_comments:  # if there are comments
+                for created_at, commenter, message in self.vod_comments:
+                    c_file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
+            else:
+                c_file.write("No comments available for this VOD.")
 
             # additional data which might be of interest
             date_of_stream, channel_id = self._get_vod_date(vod_id=self.vod_id)
