@@ -3,7 +3,7 @@
 class VODCleanedComment(tuple):
     """ This class represents a simple cleaned comment.
 
-        Each VODCleanedComment instance contains of:
+        Each VODCleanedComment instance consists of:
 
         - the `timestamp` of the message
 
