@@ -1,10 +1,10 @@
 from typing import NamedTuple
 
 
-class VODCleanedComment(NamedTuple):
-    """ This class represents a simple cleaned comment.
+class VODSimpleComment(NamedTuple):
+    """ This class represents a simple ("cleaned") comment.
 
-        Each VODCleanedComment instance consists of:
+        Each VODSimpleComment instance consists of:
 
         - the `timestamp` of the message
 
