@@ -27,7 +27,7 @@
 - an optional `.env` file containing your own Twitch.tv Client-ID insde the root directory of your project
 (or if used via the CLI inside the `pyvod-chat` directory).
 
-    Add the env-variable inside the .env file ike so: `twitch-client-id="CLIENT_ID"`
+    Add the env-variable inside the .env file like so: `twitch-client-id="CLIENT_ID"`
 
 A 'Client-ID' (public) is ***NOT*** the same as a 'Client-Secret', the latter which is not used here.
 
