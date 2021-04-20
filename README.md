@@ -34,6 +34,15 @@ A 'Client-ID' (public) is ***NOT*** the same as a 'Client-Secret', the latter wh
  
  ## Usage
  
+ **Disclaimer**: many comments == taking quite a while. With some barebone testing, around 130.000 comments can take up to roughly 12-ish minutes.
+ 
+ This is a result of how the Twitch API (v5) is providing the comments (each request comes with a `_next` param
+ which its value HAS to be used in the next request to fetch the correct next comments),
+ the more comments there are in the VOD, the more requests we have to make, which in turn takes more time.
+ 
+ Currently trying multithreading/multiprocessing out, to see if it is possible to keep the "state" steady and speeding things up.
+ 
+ 
  ### 1. within your own program
  
  ```python
