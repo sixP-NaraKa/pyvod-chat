@@ -23,9 +23,9 @@ The documentation is structured as follows:
 - an optional `.env` file containing your own Twitch.tv Client-ID insde the root directory of your project
 (or if used via the CLI inside the `pyvod-chat` directory).
 
-    Add the env-variable inside the .env file ike so: `twitch-client-id="CLIENT_ID"`
+    Add the env-variable inside the .env file like so: `twitch-client-id="CLIENT_ID"`
 
-A 'Client-ID' (public) is NOT the same as a 'Client-Secret', the latter which is not used here.
+A 'Client-ID' (public) is NOT the same as a 'Client-Secret', the latter is not used here.
 
 ***Note***: if you don't specify a Client-ID, a **default Client-ID will be used**.
 
@@ -99,7 +99,7 @@ Additional Class Attributes
     The following are class attributes which contain basic information about the VOD and its associated channel.
 
     - vod_comments:
-                the VOD comments containing a the name, message and time of a comment (class VODSimpleComment)
+                the VOD comments contain the name, message and timestamp of a comment (class VODSimpleComment)
     - raw_comments:
                 the raw comments in JSON
     - url:
@@ -120,7 +120,7 @@ Additional Class Attributes
 - `def get_comments() -> list:`
     
     "cleans" the raw_comments. Meaning: user name, when it was posted, and the body/text of the chat comment.
-    R'eturns the comments. Each comment is a **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)** object.
+    Returns the comments. Each comment is a **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)** object.
 
     If the raw data is wanted (JSON),
     simply call the class instance attribute `raw_comments` or its property `raw`.
