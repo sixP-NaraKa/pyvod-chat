@@ -39,8 +39,6 @@ class VODChat:
         There should be no need to create a instance of this class manually.
 
         :param vod_id: the VOD ID to fetch the information for
-        :param client_id: OPTIONAL Twitch.tv Client-ID. If not specified a default Client-ID will be used
-                          Note: the Client-ID (public) is NOT the same as the Client-Secret (the latter we don't use)
     """
 
     def __init__(self, vod_id: str):
