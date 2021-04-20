@@ -1,4 +1,8 @@
 # pyvod-chat
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/sixp-naraka/pyvod-chat) ![PyPI](https://img.shields.io/pypi/v/pyvod-chat) ![PyPI - Downloads](https://img.shields.io/pypi/dd/pyvod-chat)
+[![Downloads](https://pepy.tech/badge/pyvod-chat)](https://pepy.tech/project/pyvod-chat)
+
  Get the stream chat for a given Twitch VOD.
  
  pyvod can be used within your own programs via `pip install pyvod-chat`. 
@@ -31,7 +35,7 @@ A 'Client-ID' (public) is ***NOT*** the same as a 'Client-Secret', the latter wh
  
  ## Installation (PyPI)
  
- Available on PyPI.
+ Available on [PyPI](https://pypi.org/project/pyvod-chat/).
  
  `pip install pyvod-chat`
  
