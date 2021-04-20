@@ -11,25 +11,14 @@ import json
 
 import requests
 import pathlib
-import dotenv
 
 from .vodcomment import VODSimpleComment
 from .utils import validate_path
 from .exceptions import TwitchApiException
 
-# check for a .env file and get the "twitch-client-id" which we need to identify the application for use with the API
-# this is NOT the same as the Client-Secret, which we do not need here
-# if there is no such Client-ID or it is empty, we use a default Client-ID
-dotenv.load_dotenv()
-_client_id = os.getenv("twitch-client-id")
-_client_id = _client_id if _client_id else "r52h1i1phlvyxs0sdi3ooam1b3w62g"
 
+# request base url
 base_url = "https://api.twitch.tv/v5/videos/{}/comments"  # videos/979245105/comments for example
-headers = {"client-id": _client_id, "accept": "application/vnd.twitchtv.v5+json"}
-
-# additional API urls
-channel_url = "https://api.twitch.tv/v5/channels/{channel_id}"
-vod_url = "https://api.twitch.tv/v5/videos/{vod_id}"
 
 
 class VODChat:
@@ -38,11 +27,27 @@ class VODChat:
 
         There should be no need to create a instance of this class manually.
 
+        Additional Class Attributes
+        -----
+
+        The following are class attributes which contain basic information about the VOD and its associated channel.
+
+        - `vod_comments`:
+                the VOD comments containing a the name, message and time of a comment (class VODSimpleComment)
+        - `raw_comments`:
+                the raw comments in JSON
+        - `url`:
+                the base url for the VOD requests
+
         :param vod_id: the VOD ID to fetch the information for
     """
 
-    def __init__(self, vod_id: str):
+    def __init__(self, vod_id: str, _basic_vod_data, _headers):
         self.vod_id = vod_id
+
+        self._basic_data = _basic_vod_data
+
+        self._headers = _headers
 
         self.vod_comments = list()  # the cleaned comments
         self.raw_comments = dict()  # the comments in still raw form (JSON)
@@ -53,6 +58,9 @@ class VODChat:
         # a flag we set if the first request response contains an empty "comments" list value
         self._no_first_comments_response = False
 
+    def __repr__(self):
+        return "<VODChat vod_id={0.vod_id!r} vod_comments={0.vod_comments!r} url={0.url!r}>".format(self)
+
     @property
     def comments(self) -> list:
         return self.vod_comments
@@ -60,28 +68,6 @@ class VODChat:
     @property
     def raw(self) -> dict:
         return self.raw_comments
-
-    @staticmethod
-    def _get_channel(channel_id: str) -> tuple:
-        """ Get the channel for the specified channel ID. Also fetches additional data, such as the amount of
-            followers of the channel, the name of the channel, the amount of views and the broadcaster type.
-
-            :param channel_id: the channel ID (or broadcaster ID) to fetch the information from
-        """
-
-        response = requests.get(url=channel_url.format(channel_id=channel_id), headers=headers).json()
-
-        return response["display_name"], response["views"], response["followers"], response["broadcaster_type"]
-
-    @staticmethod
-    def _get_vod_date(vod_id: str) -> tuple:
-        """ Get the date the VOD has been live-streamed at (and the channel ID for further use).
-
-            :param vod_id: the VOD ID to fetch the information from
-        """
-
-        response = requests.get(url=vod_url.format(vod_id=vod_id), headers=headers).json()
-        return "".join(response["created_at"][:10]), response["channel"]["_id"]
 
     def _extract_comments(self) -> Generator:
         """ Gets the raw comments from the VOD. 'raw comments', because all the other 'junk' the request response gives
@@ -97,7 +83,7 @@ class VODChat:
         while True:
 
             # make new request with the _next cursor, so we can get the next comments payload
-            _request_response = requests.get(url=self.url, headers=headers, params={"cursor": _next})
+            _request_response = requests.get(url=self.url, headers=self._headers, params={"cursor": _next})
             _json_body = _request_response.json()
 
             if _request_response.status_code != 200:
@@ -126,7 +112,7 @@ class VODChat:
 
     def get_comments(self) -> list:
         """
-        Cleans the raw_comments. Here we go through the dictionary and extract only the needed comment data.
+        Cleans the raw_comments. Here we go through the JSON and extract only the needed comment data.
 
         Meaning: user name, when it was posted, and the body/text of the chat comment.
 
@@ -141,6 +127,7 @@ class VODChat:
 
         for comment_dict in _raw_comments:  # for each dict (i.e. yield) we have in our generator
             if self._no_first_comments_response:  # if True, no comment data is available
+                self.vod_comments = None
                 return self.comments
             for comment_data_list_of_dicts in comment_dict["comments"]:  # list of dicts in the overall comment_dict
 
@@ -182,18 +169,24 @@ class VODChat:
             if self.vod_comments:  # if there are comments
                 for created_at, commenter, message in self.vod_comments:
                     c_file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
-            else:
+            elif self.vod_comments is None:  # if we set vod_comments to None during extraction (no comments available)
                 c_file.write("No comments available for this VOD.")
+            else:  # if to_file() has been called before comments have been tried to be extracted from the VOD
+                c_file.write("No comments have yet been extracted. Try `vodchat.get_comments()` first.")
 
             # additional data which might be of interest
-            date_of_stream, channel_id = self._get_vod_date(vod_id=self.vod_id)
-            name, views, followers, broadcaster_type = self._get_channel(channel_id=channel_id)
-            amt_of_comments = len(self.vod_comments)
+            date_of_stream, channel_id = self._basic_data.created_at, self._basic_data.channel_id
+            name, views, followers, broadcaster_type = (self._basic_data.channel_name,
+                                                        self._basic_data.channel_views,
+                                                        self._basic_data.channel_followers,
+                                                        self._basic_data.channel_type)
+            amt_of_comments = len(self.vod_comments) if self.vod_comments else 0
 
             # now we add some additional data at the end of the .txt file
             # (i.e. VOD ID, date of stream, streamer name, etc.)
             c_file.write("\n\n\n\n"
-                         "Date of Stream: {date}\n"
+                         "Date of Stream: {date} - {title} ({game})\n"
+                         "\tStream length: {length} hours\n"
                          "Streamer: {name}\n"
                          "\tChannel ID: {channel_id}\n"
                          "\tChannel views: {views}\n"
@@ -202,6 +195,9 @@ class VODChat:
                          "VOD ID: {vod}\n"
                          "Amount of comments: {amount}\n"
                          .format(date=date_of_stream,
+                                 title=self._basic_data.title,
+                                 game=self._basic_data.game,
+                                 length=self._basic_data.vod_length,
                                  name=name,
                                  channel_id=channel_id,
                                  views=views,
