@@ -116,11 +116,10 @@ dmypy.json
 # IDE
 .idea
 
-# .txt files
+# .txt and output files
 old.txt
 *_CHAT.txt
 *_RAW.json
-new_ideas.txt
 
 # .py files
 test*.py
