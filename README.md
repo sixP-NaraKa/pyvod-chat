@@ -41,7 +41,7 @@ A 'Client-ID' (public) is ***NOT*** the same as a 'Client-Secret', the latter wh
  
  ## Usage
  
- **Note**: many comments == taking quite a while. With some barebone testing, around 130.000 comments can take up to roughly 12-ish minutes.
+ **Note**: many comments == taking quite a while. With some barebone testing, **around 130.000 comments can take up to roughly 12-ish minutes** (around 2400 requests in total, 200-ish per minute).
  
  This is a result of how the Twitch API (v5) is providing the comments (each request comes with a `_next` param
  which its value HAS to be used in the next request to fetch the correct next comments),
