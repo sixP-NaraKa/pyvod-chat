@@ -1,3 +1,10 @@
+"""
+pyvod-chat - a simple tool to download a past Twitch.tv broadcasts (VOD) chat comments!
+
+Available on GitHub (+ documentation): https://github.com/sixP-NaraKa/pyvod-chat
+"""
+
+
 import os
 from typing import Generator, Union
 import json
