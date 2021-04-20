@@ -30,8 +30,8 @@ if __name__ == "__main__":
     # get a VOD
     vod = VOD(vod_id=_vod_id)
     print("Getting VOD comments for VOD '{}'...".format(_vod_id))
-    print("Writing the output into the following directory: {}".format(fp))
-    print("Depending on how many comments the VOD has, it might take a while.")
+    print("Will write the output into the following directory: {}".format(fp))
+    print("\nDepending on how many comments the VOD has, it might take a while.\n")
 
     # get the VODChat associated with the VOD
     vodchat = vod.get_vodchat()
@@ -46,13 +46,12 @@ if __name__ == "__main__":
     # if there are no comments available, the request response in JSON format will be returned
     # raw_comments = vodchat.raw  # or vodchat.raw_comments
 
-    # write the output to the file(s)
-    # - should only be called after .get_comments(), otherwise no comments are there to write
-    vodchat.to_file(dirpath=fp, save_json=True)
-
-    amt_comments = len(comments)
+    amt_comments = len(comments) if comments else 0
     print("Comments extracted: ", amt_comments)
     if amt_comments:  # > 0:
+        # write the output to the file(s)
+        # - should only be called after .get_comments(), otherwise no comments are there to write
+        vodchat.to_file(dirpath=fp, save_json=True)
         print("See the following files in the mentioned directory: ")
         print("- VOD_{}_CHAT.txt for the extracted comments (and additional channel information)."
               "\n- VOD_{}_RAW.json for the raw data.".format(_vod_id, _vod_id))
