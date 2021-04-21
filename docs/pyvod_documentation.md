@@ -124,6 +124,32 @@ Additional Class Attributes
 
     If the raw data is wanted (JSON),
     simply call the class instance attribute `raw_comments` or its property `raw`.
+    
+    
+- `def to_file(dirpath: Union[pathlib.Path, str] = None, save_json: bool = True) -> None:`
+
+    Saves the cleaned vod comment data in a plain `.txt` file.
+    The raw JSON data can additionally be saved in a separate `.json` file, if `save_json` is set (default behavior).
+
+    Only a valid directory path pointing to a folder is allowed.
+    
+    Arguments:
+
+    - `dirpath`:
+    
+        the path pointing to a directory in which the file(s) are to be saved.
+        Defaults to the current working directory as returned by `os.getcwd()`
+        
+        Can *either* be directly a pathlib.Path object or a str.
+        
+    - `save_json`:
+    
+        whether or not a separate .json file containing the raw JSON data should be created
+
+    Raises: `from .exceptions`
+    - `DirectoryDoesNotExistError` | `DirectoryIsAFileError`: 
+    
+        if either the `dirpath` does not exist, or the path points to a file
 
 
 ## **class `VODSimpleComment(NamedTuple)`**
