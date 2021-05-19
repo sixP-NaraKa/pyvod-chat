@@ -8,6 +8,7 @@ Available on GitHub (+ documentation): https://github.com/sixP-NaraKa/pyvod-chat
 import os
 from typing import Generator, Union
 import json
+from datetime import datetime
 
 import requests
 import pathlib
@@ -135,9 +136,25 @@ class VODChat:
                 commenter = comment_data_list_of_dicts["commenter"]["display_name"]  # or "name" key value
                 message = comment_data_list_of_dicts["message"]["body"]
 
+                # get the time the comment has been posted at
+                # added in v0.2.0
+
+                # time when the livestream happened as a datetime.datetime object
+                _vod_created_at = self._basic_data.created_at
+                _vod_datetime = datetime.strptime(_vod_created_at,
+                                                  "%Y-%m-%dT%H:%M:%S.%fZ" if "." in _vod_created_at else "%Y-%m-%dT%H:%M:%SZ")
+
+                # time when the comment has been posted as a datetime.datetime object
+                _comment_datetime = datetime.strptime(created_at,
+                                                      "%Y-%m-%dT%H:%M:%S.%fZ" if "." in created_at else "%Y-%m-%dT%H:%M:%SZ")
+
+                # subtract the the two datetime objects and
+                # now we have the exact time the comment was posted in the chat
+                posted_at = (_comment_datetime - _vod_datetime).__str__()[:7]  # only get the hours:minutes:seconds
+
                 # we now have the needed comment data, which we store in a tuple VODCleanedComments,
                 # which is itself stored in the 'vod_comments' class instance variable, which holds all the comments
-                comment_data = VODSimpleComment(timestamp=created_at, name=commenter, message=message)
+                comment_data = VODSimpleComment(timestamp=created_at, posted_at=posted_at, name=commenter, message=message)
                 self.vod_comments.append(comment_data)
 
         return self.comments
@@ -166,16 +183,19 @@ class VODChat:
         chat_filepath = directory_path / file_name.format(self.vod_id, "CHAT", "txt")
         with chat_filepath.open(mode="w", encoding="utf-8") as c_file:
 
+            # added in v0.2.0
+            c_file.write("{:<30} {:<10} {:<30} {}\n".format("Created at", "Posted at", "User", "Message"))
+
             if self.vod_comments:  # if there are comments
-                for created_at, commenter, message in self.vod_comments:
-                    c_file.write("{:<30} {:<30} {}\n".format(created_at, commenter, message))
+                for created_at, posted_at, commenter, message in self.vod_comments:
+                    c_file.write("{:<30} {:<10} {:<30} {}\n".format(created_at, posted_at, commenter, message))
             elif self.vod_comments is None:  # if we set vod_comments to None during extraction (no comments available)
                 c_file.write("No comments available for this VOD.")
             else:  # if to_file() has been called before comments have been tried to be extracted from the VOD
                 c_file.write("No comments have yet been extracted. Try `vodchat.get_comments()` first.")
 
             # additional data which might be of interest
-            date_of_stream, channel_id = self._basic_data.created_at, self._basic_data.channel_id
+            date_of_stream, channel_id = self._basic_data.created_at[:10], self._basic_data.channel_id
             name, views, followers, broadcaster_type = (self._basic_data.channel_name,
                                                         self._basic_data.channel_views,
                                                         self._basic_data.channel_followers,

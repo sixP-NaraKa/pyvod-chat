@@ -108,7 +108,7 @@ class VOD:
         data = BasicData(
             response_body["title"],                      # VOD title
             response_body["views"],                      # VOD views
-            response_body["created_at"][:10],            # VOD stream date
+            response_body["created_at"],            # VOD stream date
             response_body["game"],                       # what game has been streamed
             response_body["length"],                     # VOD length in seconds (seconds / 3600 = hours)
             response_body["channel"]["display_name"],    # channel name (streamer name)
