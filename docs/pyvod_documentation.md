@@ -37,33 +37,51 @@ The main entry point, is  responsible for getting the [VODChat](https://github.c
 
 This class also has additional information about the VOD itself and its associated channel.
 
-Parameters:
+##### Parameters:
 - `vod_id`: 
     
     the VOD ID to fetch the information for
 
-Additional Class Attributes:
+##### Additional Class Attributes:
 
-    The following are class attributes which contain basic information about the VOD and its associated channel.
+The following are class attributes which contain basic information about the VOD and its associated channel.
 
-    - vod_title:
-                the title of the VOD
-    - vod_length:
-                the length of the VOD in hours
-    - vod_date:
-                the date when the broadcast has been streamed
-    - vod_views:
-                the total amount of VOD views
-    - channel:
-                the name of the channel associated with the VOD
-    - channel_id:
-                the channel ID
-    - channel_views:
-                total channel views
-    - channel_followers:
-                total channel followers
-    - channel_broadcaster_type:
-                whether the channel is partnered or a affiliate
+- `vod_title`:
+    
+    the title of the VOD
+        
+- `vod_length`:
+    
+    the length of the VOD in hours
+    
+- `vod_date`:
+      
+    the date when the broadcast has been streamed
+     
+- `vod_views`:
+
+    the total amount of VOD views
+                
+- `channel`:
+
+    the name of the channel associated with the VOD
+                
+- `channel_id`:
+
+    the channel ID
+                
+- `channel_views`:
+
+    total channel views
+                
+- `channel_followers`:
+
+    total channel followers
+                
+- `channel_broadcaster_type`:
+
+    whether the channel is partnered or a affiliate
+                
 
 ### available methods
 
@@ -79,7 +97,7 @@ A class which represents the VOD stream chat. We store here both the 'raw commen
 
 There should be no need to create a instance of this class manually.
 
-Parameters:
+##### Parameters:
 - `vod_id`: 
     
     the VOD ID to fetch the information for
@@ -94,16 +112,19 @@ with the given VOD and its channel owner
     the required request headers to authenticate with the Twitch API
     
     
-Additional Class Attributes
+##### Additional Class Attributes:
 
-    The following are class attributes which contain basic information about the VOD and its associated channel.
+- `vod_comments`:
 
-    - vod_comments:
-                the VOD comments contain the name, message and timestamp of a comment (class VODSimpleComment)
-    - raw_comments:
-                the raw comments in JSON
-    - url:
-                the base url for the VOD requests
+    the VOD comments contain the name, message and timestamp of a comment (class VODSimpleComment)
+
+- `raw_comments`:
+
+    the raw comments in JSON
+
+- `url`:
+
+    the base url for the VOD requests
 
 
 ### available methods
@@ -119,7 +140,7 @@ Additional Class Attributes
     
 - `def get_comments() -> list:`
     
-    "cleans" the raw_comments. Meaning: user name, when it was posted, and the body/text of the chat comment.
+    "cleans" the raw_comments. Meaning: timestamp, user name, when the message has been posted in the chat and the body/text of the chat comment.
     Returns the comments. Each comment is a **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)** object.
 
     If the raw data is wanted (JSON),
@@ -160,6 +181,10 @@ Each VODSimpleComment instance consists of:
 
 - the `timestamp` of the message
 
+- the `posted_at` time (when in the VOD the comment has been posted)
+            
+            -> added in v0.2.0
+
 - the `name` of the user who wrote the message
 
 - the `message` body
@@ -172,6 +197,7 @@ Like so:
 
 for comment in vod_comments:
     print(comment.timestamp)
+    print(comment.posted_at)
     print(comment.name)
     print(comment.message)
 ```

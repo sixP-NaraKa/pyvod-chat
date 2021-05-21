@@ -77,12 +77,13 @@ raw_comments = vodchat.raw
 for comment in comments:
     name = comment.name
     timestamp = comment.timestamp
+    posted_at = comment.posted_at
     message = comment.message
 
 # 2. via simple tuple unpacking
-for timestamp, name, message in comments:
+for timestamp, posted_at, name, message in comments:
     # process comment data
-    print(timestamp, name, message)
+    print(timestamp, posted_at, name, message)
 
 # if you want to access the VODChat comments again at a later date,
 # but do not want to fetch them again from the API,
