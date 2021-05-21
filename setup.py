@@ -6,7 +6,7 @@ with open("README.md") as f:
 
 setup(
     name="pyvod-chat",
-    version="0.1.0",
+    version="0.2.0",
     description="A simple library and/or CLI tool for downloading a past Twitch.tv broadcast's (VOD) chat comments.",
     long_description=readme,
     long_description_content_type="text/markdown",
