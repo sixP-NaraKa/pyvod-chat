@@ -15,6 +15,9 @@ class VODSimpleComment(NamedTuple):
 
         - the `timestamp` of the message
 
+        - the `posted_at` time (when in the VOD the comment has been posted)
+            -> added in v0.2.0
+
         - the `name` of the user who wrote the message
 
         - the `message` body
@@ -23,8 +26,9 @@ class VODSimpleComment(NamedTuple):
     """
 
     timestamp: str
+    posted_at: str
     name: str
     message: str
 
     def __repr__(self):
-        return "<VODComment timestamp={0.timestamp!r} name={0.name!r} message={0.message!r}>".format(self)
+        return "<VODComment timestamp={0.timestamp!r} posted_at={0.posted_at!r} name={0.name!r} message={0.message!r}>".format(self)
