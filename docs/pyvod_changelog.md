@@ -9,7 +9,7 @@ Changes are listed here. The latest version is currently v0.2.0.
     - `hours:minutes:seconds` format
     
     You can access it like the other
-    **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)**
+    **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecommentnamedtuple)**
     attributes:
         
 ```python

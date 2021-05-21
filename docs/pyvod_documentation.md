@@ -8,7 +8,7 @@ The documentation is structured as follows:
    ---      |   ---     |
 |  **[VOD](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vod)** | main entry point |
 | **[VODChat](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodchat)** | handles the fetching of chat comments and additional output saving (to .txt and .json) |
-| **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)** | represents a simple chat comment |
+| **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecommentnamedtuple)** | represents a simple chat comment |
 
 ### Requirements
  Also see [requirements.txt](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/requirements.txt).
@@ -141,7 +141,7 @@ with the given VOD and its channel owner
 - `def get_comments() -> list:`
     
     "cleans" the raw_comments. Meaning: timestamp, user name, when the message has been posted in the chat and the body/text of the chat comment.
-    Returns the comments. Each comment is a **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecomment)** object.
+    Returns the comments. Each comment is a **[VODSimpleComment](https://github.com/sixP-NaraKa/pyvod-chat/blob/main/docs/pyvod_documentation.md#class-vodsimplecommentnamedtuple)** object.
 
     If the raw data is wanted (JSON),
     simply call the class instance attribute `raw_comments` or its property `raw`.
