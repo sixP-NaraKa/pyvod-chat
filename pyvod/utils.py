@@ -6,6 +6,7 @@ Available on GitHub (+ documentation): https://github.com/sixP-NaraKa/pyvod-chat
 
 
 import pathlib
+from datetime import datetime
 
 from .exceptions import DirectoryDoesNotExistError, DirectoryIsAFileError
 
@@ -29,3 +30,22 @@ def validate_path(provided_path: str) -> pathlib.Path:
     provided_path = path
 
     return provided_path
+
+
+def get_strptime(datetime_string: str) -> datetime:
+    """ Helper function which parses a valid datetime object out of a given datetime string (with a predefined format).
+
+        :param datetime_string: the string to parse the datetime object from
+        :return: the valid datetime object
+    """
+
+    if "." in datetime_string:
+        split = datetime_string.split(".")
+        microsecond_split = split[1]
+        # 8 because 6 are max. for the datetime.strptime() %f's (microseconds) format code, and 1 is the Z character
+        if len(microsecond_split) > 8:
+            split[1] = microsecond_split[:6] + "Z"
+        datetime_string = ".".join(split)
+        return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S.%fZ")
+    else:
+        return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%SZ")

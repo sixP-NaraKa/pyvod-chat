@@ -62,7 +62,8 @@ vodchat = vod.get_vodchat()  # get a VODChat instance, contains the VOD chat
 
 # fetches the comments from the VOD
 # this returns a list containing VODSimpleComment (NamedTuple) objects,
-# which only contain the 'name', 'timestamp' and 'message' of a comment
+# which only contain the 'name', 'timestamp', when the message has been posted and
+# the 'message' content of a comment
 comments = vodchat.get_comments()
 
 # if the raw comment data (JSON) is needed, simply fetch them like so

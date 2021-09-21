@@ -8,13 +8,12 @@ Available on GitHub (+ documentation): https://github.com/sixP-NaraKa/pyvod-chat
 import os
 from typing import Generator, Union
 import json
-from datetime import datetime
 
 import requests
 import pathlib
 
 from .vodcomment import VODSimpleComment
-from .utils import validate_path
+from .utils import validate_path, get_strptime
 from .exceptions import TwitchApiException
 
 
@@ -126,6 +125,9 @@ class VODChat:
 
         _raw_comments = self._extract_comments()  # Generator with the raw comments (batch for batch)
 
+        # time when the livestream happened as a datetime.datetime object
+        _vod_datetime = get_strptime(datetime_string=self._basic_data.created_at)
+
         for comment_dict in _raw_comments:  # for each dict (i.e. yield) we have in our generator
             if self._no_first_comments_response:  # if True, no comment data is available
                 self.vod_comments = None
@@ -139,20 +141,14 @@ class VODChat:
                 # get the time the comment has been posted at
                 # added in v0.2.0
 
-                # time when the livestream happened as a datetime.datetime object
-                _vod_created_at = self._basic_data.created_at
-                _vod_datetime = datetime.strptime(_vod_created_at,
-                                                  "%Y-%m-%dT%H:%M:%S.%fZ" if "." in _vod_created_at else "%Y-%m-%dT%H:%M:%SZ")
-
                 # time when the comment has been posted as a datetime.datetime object
-                _comment_datetime = datetime.strptime(created_at,
-                                                      "%Y-%m-%dT%H:%M:%S.%fZ" if "." in created_at else "%Y-%m-%dT%H:%M:%SZ")
+                _comment_datetime = get_strptime(datetime_string=created_at)
 
                 # subtract the the two datetime objects and
                 # now we have the exact time the comment was posted in the chat
                 posted_at = (_comment_datetime - _vod_datetime).__str__()[:7]  # only get the hours:minutes:seconds
 
-                # we now have the needed comment data, which we store in a tuple VODCleanedComments,
+                # we now have the needed comment data, which we store in a tuple VODSimpleComment,
                 # which is itself stored in the 'vod_comments' class instance variable, which holds all the comments
                 comment_data = VODSimpleComment(timestamp=created_at, posted_at=posted_at, name=commenter, message=message)
                 self.vod_comments.append(comment_data)
