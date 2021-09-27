@@ -106,16 +106,16 @@ class VOD:
                                             "channel_views channel_followers channel_type"
                                )
         data = BasicData(
-            response_body["title"],                      # VOD title
-            response_body["views"],                      # VOD views
-            response_body["created_at"],            # VOD stream date
-            response_body["game"],                       # what game has been streamed
-            response_body["length"],                     # VOD length in seconds (seconds / 3600 = hours)
-            response_body["channel"]["display_name"],    # channel name (streamer name)
-            response_body["channel"]["_id"],             # channel ID
-            response_body["channel"]["created_at"],      # channel creation date
-            response_body["channel"]["views"],           # total channel views
-            response_body["channel"]["followers"],       # total channel followers
+            response_body["title"],                       # VOD title
+            response_body["views"],                       # VOD views
+            response_body["created_at"],                  # VOD stream date
+            response_body["game"],                        # what game has been streamed
+            response_body["length"],                      # VOD length in seconds (seconds / 3600 = hours)
+            response_body["channel"]["display_name"],     # channel name (streamer name)
+            response_body["channel"]["_id"],              # channel ID
+            response_body["channel"]["created_at"],       # channel creation date
+            response_body["channel"]["views"],            # total channel views
+            response_body["channel"]["followers"],        # total channel followers
             response_body["channel"]["broadcaster_type"]  # broadcaster type (i.e. partner or affiliate, etc.)
         )
         data = data._replace(vod_length=round(float(data.vod_length) / 3600, 2))
