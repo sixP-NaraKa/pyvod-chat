@@ -1,6 +1,6 @@
 # Changelog
 
-Changes are listed here. The latest version is currently v0.2.0.
+Changes are listed here. The latest version is currently v0.2.1.
 
 ## v0.2.1 (27.09.2021)
 
