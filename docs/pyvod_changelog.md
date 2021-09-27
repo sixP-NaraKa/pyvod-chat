@@ -2,6 +2,11 @@
 
 Changes are listed here. The latest version is currently v0.2.0.
 
+## v0.2.1 (27.09.2021)
+
+- added a fix for the mentioned `strptime error` in issue #3.
+- README formatting
+
 ## v0.2.0 (21.05.2021)
 
 - added additional comment information `posted_at`:
